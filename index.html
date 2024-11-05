@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarot Card Reader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #fff;
+        }
+        
+        .container {
+            text-align: center;
+            background-color: #2d2d2d;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        
+        select, button, textarea {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        
+        textarea {
+            width: 80%;
+            min-height: 100px;
+            background-color: #3d3d3d;
+            color: white;
+            border: 1px solid #555;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        .card {
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #3d3d3d;
+            border-radius: 10px;
+            max-width: 300px;
+            display: none;
+        }
+        
+        .card h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+
+        #responseMessage, #askResponse {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #3d3d3d;
+            border-radius: 10px;
+            display: none;
+            word-wrap: break-word;
+        }
+
+        #askBox {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #3d3d3d;
+            border-radius: 10px;
+        }
+
+        .success {
+            color: #4CAF50;
+        }
+
+        .error {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔮 Tarot Card Reader</h1>
+        
+        <div>
+            <select id="topic">
+                <option value="love">Love & Relationships</option>
+                <option value="career">Career & Work</option>
+                <option value="personal">Personal Growth</option>
+                <option value="general">General Guidance</option>
+            </select>
+        </div>
+        
+        <button onclick="drawCard()">Draw a Card</button>
+        
+        <div id="cardDisplay" class="card">
+            <h3 id="cardName"></h3>
+        </div>
+
+        <div id="responseMessage"></div>
+
+        <div id="askBox">
+            <h3>Ask about your reading</h3>
+            <textarea id="questionInput" placeholder="Type your question here..."></textarea>
+            <button onclick="askQuestion()">Ask</button>
+            <div id="askResponse"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentCard = null;
+        let currentTopic = null;
+
+        const tarotCards = [
+            // Major Arcana
+            { name: "0 - The Fool" },
+            { name: "I - The Magician" },
+            { name: "II - The High Priestess" },
+            { name: "III - The Empress" },
+            { name: "IV - The Emperor" },
+            { name: "V - The Hierophant" },
+            { name: "VI - The Lovers" },
+            { name: "VII - The Chariot" },
+            { name: "VIII - Strength" },
+            { name: "IX - The Hermit" },
+            { name: "X - Wheel of Fortune" },
+            { name: "XI - Justice" },
+            { name: "XII - The Hanged Man" },
+            { name: "XIII - Death" },
+            { name: "XIV - Temperance" },
+            { name: "XV - The Devil" },
+            { name: "XVI - The Tower" },
+            { name: "XVII - The Star" },
+            { name: "XVIII - The Moon" },
+            { name: "XIX - The Sun" },
+            { name: "XX - Judgement" },
+            { name: "XXI - The World" },
+
+            // Wands
+            { name: "Ace of Wands" },
+            { name: "Two of Wands" },
+            { name: "Three of Wands" },
+            { name: "Four of Wands" },
+            { name: "Five of Wands" },
+            { name: "Six of Wands" },
+            { name: "Seven of Wands" },
+            { name: "Eight of Wands" },
+            { name: "Nine of Wands" },
+            { name: "Ten of Wands" },
+            { name: "Page of Wands" },
+            { name: "Knight of Wands" },
+            { name: "Queen of Wands" },
+            { name: "King of Wands" },
+
+            // Cups
+            { name: "Ace of Cups" },
+            { name: "Two of Cups" },
+            { name: "Three of Cups" },
+            { name: "Four of Cups" },
+            { name: "Five of Cups" },
+            { name: "Six of Cups" },
+            { name: "Seven of Cups" },
+            { name: "Eight of Cups" },
+            { name: "Nine of Cups" },
+            { name: "Ten of Cups" },
+            { name: "Page of Cups" },
+            { name: "Knight of Cups" },
+            { name: "Queen of Cups" },
+            { name: "King of Cups" },
+
+            // Swords
+            { name: "Ace of Swords" },
+            { name: "Two of Swords" },
+            { name: "Three of Swords" },
+            { name: "Four of Swords" },
+            { name: "Five of Swords" },
+            { name: "Six of Swords" },
+            { name: "Seven of Swords" },
+            { name: "Eight of Swords" },
+            { name: "Nine of Swords" },
+            { name: "Ten of Swords" },
+            { name: "Page of Swords" },
+            { name: "Knight of Swords" },
+            { name: "Queen of Swords" },
+            { name: "King of Swords" },
+
+            // Pentacles
+            { name: "Ace of Pentacles" },
+            { name: "Two of Pentacles" },
+            { name: "Three of Pentacles" },
+            { name: "Four of Pentacles" },
+            { name: "Five of Pentacles" },
+            { name: "Six of Pentacles" },
+            { name: "Seven of Pentacles" },
+            { name: "Eight of Pentacles" },
+            { name: "Nine of Pentacles" },
+            { name: "Ten of Pentacles" },
+            { name: "Page of Pentacles" },
+            { name: "Knight of Pentacles" },
+            { name: "Queen of Pentacles" },
+            { name: "King of Pentacles" }
+        ];
+
+        async function drawCard() {
+            const cardDisplay = document.getElementById('cardDisplay');
+            const cardName = document.getElementById('cardName');
+            const topic = document.getElementById('topic').value;
+            const responseDiv = document.getElementById('responseMessage');
+            const askBox = document.getElementById('askBox');
+            
+            // Store current card and topic
+            currentTopic = topic;
+            
+            // Randomly select a card
+            const randomCard = tarotCards[Math.floor(Math.random() * tarotCards.length)];
+            const isReversed = Math.random() < 0.5;
+            const cardResult = randomCard.name + (isReversed ? " (Reversed)" : "");
+            currentCard = cardResult;
+            
+            // Display the card
+            cardName.textContent = cardResult;
+            cardDisplay.style.display = 'block';
+            
+            // Add animation effect
+            cardDisplay.style.opacity = 0;
+            setTimeout(() => {
+                cardDisplay.style.transition = 'opacity 1s';
+                cardDisplay.style.opacity = 1;
+            }, 100);
+
+            // Prepare data for webhook
+            const data = {
+                topic: topic,
+                card: cardResult,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch('https://cancoong.app.n8n.cloud/webhook/43d6446b-a96d-4be8-b2e6-a2ee6951aab4', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    responseDiv.textContent = JSON.stringify(result, null, 2);
+                    responseDiv.className = "success";
+                    // Show ask box after successful card draw
+                    askBox.style.display = 'block';
+                } else {
+                    throw new Error('Network response was not ok');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                responseDiv.textContent = "An error occurred. Please try again.";
+                responseDiv.className = "error";
+                askBox.style.display = 'none';
+            }
+
+            responseDiv.style.display = 'block';
+        }
+
+        async function askQuestion() {
+            const questionInput = document.getElementById('questionInput');
+            const askResponse = document.getElementById('askResponse');
+            
+            if (!questionInput.value.trim()) {
+                askResponse.textContent = "Please enter a question.";
+                askResponse.className = "error";
+                askResponse.style.display = 'block';
+                return;
+            }
+
+            const data = {
+                topic: currentTopic,
+                card: currentCard,
+                question: questionInput.value.trim()
+            };
+
+            try {
+                const response = await fetch('https://cancoong.app.n8n.cloud/webhook/f7a3d9c3-cf3b-4c9a-9b38-09b4cbc9725e', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    askResponse.textContent = JSON.stringify(result, null, 2);
+                    askResponse.className = "success";
+                } else {
+                    throw new Error('Network response was not ok');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                askResponse.textContent = "An error occurred. Please try again.";
+                askResponse.className = "error";
+            }
+
+            askResponse.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
